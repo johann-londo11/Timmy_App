@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timmy IA PRO</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4facfe">
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.container {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    width: 360px;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+    text-align: center;
+}
+input, select {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin: 5px;
+    width: 90%;
+}
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #4facfe;
+    color: white;
+    cursor: pointer;
+    margin: 5px;
+}
+.progress {
+    width: 100%;
+    height: 8px;
+    background: #ddd;
+    border-radius: 10px;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #4facfe;
+}
+.ai-box{
+    background:#eef6ff;
+    padding:10px;
+    border-radius:10px;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>Timmy IA</h1>
+
+<select id="modo">
+<option value="estudiante">Estudiante</option>
+<option value="trabajador">Trabajador</option>
+</select>
+
+<input type="text" id="tarea" placeholder="Tarea">
+<input type="time" id="hora">
+
+<select id="prioridad">
+<option value="alta">Alta</option>
+<option value="media">Media</option>
+<option value="baja">Baja</option>
+</select>
+
+<button onclick="agregar()">Agregar</button>
+<button onclick="voz()">🎤 Voz</button>
+<button onclick="ia()">🤖 IA</button>
+
+<div class="progress">
+<div class="progress-bar" id="barra"></div>
+</div>
+
+<p>Puntos: <span id="puntos">0</span> | Tareas: <span id="contador">0</span></p>
+<p id="estado">🔥 En progreso</p>
+
+<div class="ai-box" id="iaBox">La IA te ayudará aquí...</div>
+
+<ul id="lista"></ul>
+
+<button onclick="reset()">Reset</button>
+</div>
+
+<script>
+let modo = localStorage.getItem("modo") || "estudiante";
+let puntos = parseInt(localStorage.getItem("puntos")) || 0;
+
+function getT(){return JSON.parse(localStorage.getItem("t_"+modo))||[]}
+function saveT(t){localStorage.setItem("t_"+modo,JSON.stringify(t))}
+
+function agregar(){
+let t = tarea.value;
+let h = hora.value;
+let p = prioridad.value;
+if(!t) return;
+
+let tareas = getT();
+tareas.push({t,h,p});
+saveT(tareas);
+
+tarea.value="";
+render();
+}
+
+function render(){
+let lista="";
+let tareas = getT();
+
+tareas.forEach((x,i)=>{
+lista+=`<li>${x.t} (${x.h}) - ${x.p}
+<br>
+<button onclick="done(${i})">✔</button>
+<button onclick="del(${i})">🗑</button></li>`;
+});
+
+document.getElementById("lista").innerHTML=lista;
+document.getElementById("puntos").innerText=puntos;
+document.getElementById("contador").innerText=tareas.length;
+
+barra.style.width=(tareas.length===0?100:(puntos%100))+"%";
+
+estado.innerText = tareas.length===0 ?
+"🔥 Día completado | 📚 Productivo"
+:"🔥 En progreso";
+}
+
+function done(i){
+let t=getT();
+t.splice(i,1);
+puntos+=10;
+saveT(t);
+localStorage.setItem("puntos",puntos);
+render();
+}
+
+function del(i){
+let t=getT();
+t.splice(i,1);
+saveT(t);
+render();
+}
+
+function reset(){
+localStorage.clear();
+puntos=0;
+render();
+}
+
+function voz(){
+let r=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+r.lang="es-ES";
+r.start();
+r.onresult=e=>{tarea.value=e.results[0][0].transcript;}
+}
+
+// 🔥 IA SIMULADA INTELIGENTE (PRO ENTREGA)
+function ia(){
+let texto = tarea.value.toLowerCase();
+
+let respuesta="";
+
+if(texto.includes("estudiar")){
+respuesta="📚 Divide tu estudio en bloques de 25 minutos.";
+}
+else if(texto.includes("trabajo")){
+respuesta="💼 Prioriza tareas importantes primero.";
+}
+else if(texto.includes("ejercicio")){
+respuesta="🏃‍♂️ Empieza con 20 minutos diarios.";
+}
+else{
+respuesta="🤖 Organiza tu tarea en pasos pequeños y claros.";
+}
+
+iaBox.innerText=respuesta;
+}
+
+document.getElementById("modo").addEventListener("change",e=>{
+modo=e.target.value;
+localStorage.setItem("modo",modo);
+render();
+});
+
+render();
+
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
